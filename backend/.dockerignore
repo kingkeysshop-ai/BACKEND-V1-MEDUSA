@@ -1,0 +1,31 @@
+# dependencies
+node_modules
+.pnpm-store
+pnpm-lock.yaml
+
+# git
+.git
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pki
+.env
+.medusa
+
+# Keep these for build:
+#!.env.template
+#!src/
+#!medusa-config.js

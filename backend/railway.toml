@@ -1,4 +1,6 @@
-# Railway configuration for Medusa 2.0 Backend
+# IMPORTANT: In Railway UI, set Root Directory to '/backend' in service Settings.
+
+#Railway configuration for Medusa 2.0 Backend
 # Docs: https://docs.railway.app/reference/config-as-code
 
 [build]

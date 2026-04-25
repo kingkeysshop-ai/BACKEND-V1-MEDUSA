@@ -37,15 +37,17 @@ export class MedusaJsPaymentService extends AbstractPaymentProvider<MedusaJsPaym
     return paymentSessionData
   }
 
-  async refundPayment(paymentSessionData: any, amount: number): Promise<any> {
-    return { ...paymentSessionData, refunded_amount: amount }
+  async refundPayment(input: any): Promise<any> {
+    return { ...input, refunded: true }
   }
 
   async cancelPayment(paymentSessionData: any): Promise<any> {
     return paymentSessionData
   }
 
-  async deletePayment(_paymentSessionData: any): Promise<void> {}
+  async deletePayment(_paymentSessionData: any): Promise<any> {
+    return {}
+  }
 
   async getPaymentStatus(_paymentSessionData: any): Promise<any> {
     return "authorized"
@@ -57,5 +59,9 @@ export class MedusaJsPaymentService extends AbstractPaymentProvider<MedusaJsPaym
 
   async updatePayment(context: any): Promise<any> {
     return context
+  }
+
+  async getWebhookActionAndData(data: any): Promise<any> {
+    return { action: "not_supported", data: {} }
   }
 }

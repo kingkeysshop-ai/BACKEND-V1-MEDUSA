@@ -1,7 +1,4 @@
-# Railway Build Fix TODO
-
-- [x] Update backend/src/lib/constants.ts: Add fallback env vars (DATABASE_URL, JWT_SECRET, COOKIE_SECRET)
-- [x] Update backend/src/scripts/postBuild.js: Make .medusa/server check tolerant
-- [ ] Commit with message "fix: add fallback env vars for Railway build time"
-- [ ] git push origin main
-- [ ] Verify Railway deployment success
+- [x] Reemplazar completamente `backend/src/modules/payment-medusajs/services/medusajs-payment.ts` con el contenido provisto por el usuario.
+- [x] Verificar que el archivo refleje los cambios solicitados (métodos abstractos y firmas).
+- [ ] Hacer commit con mensaje: `fix: implement missing abstract methods in payment provider`.
+- [ ] Push a `main`.

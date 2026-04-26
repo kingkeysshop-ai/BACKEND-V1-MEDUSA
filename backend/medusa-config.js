@@ -1,56 +1,24 @@
-import { loadEnv, Modules, defineConfig } from '@medusajs/framework/utils';
-import {
-  ADMIN_CORS,
-  AUTH_CORS,
-  AURPAY_API_KEY,
-  AURPAY_ENVIRONMENT,
-  BACKEND_URL,
-  COOKIE_SECRET,
-  DATABASE_URL,
-  JWT_SECRET,
-  MEDUSAJS_PAYMENT_API_KEY,
-  MEILISEARCH_ADMIN_KEY,
-  MEILISEARCH_HOST,
-  MINIO_ACCESS_KEY,
-  MINIO_BUCKET,
-  MINIO_ENDPOINT,
-  MINIO_SECRET_KEY,
-  REDIS_URL,
-  RESEND_API_KEY,
-  RESEND_FROM_EMAIL,
-  SENDGRID_API_KEY,
-  SENDGRID_FROM_EMAIL,
-  SHOULD_DISABLE_ADMIN,
-  STORE_CORS,
-  STRIPE_API_KEY,
-  STRIPE_WEBHOOK_SECRET,
-  WORKER_MODE
-} from 'lib/constants';
+const { loadEnv, Modules, defineConfig } = require('@medusajs/framework/utils');
 
 loadEnv(process.env.NODE_ENV, process.cwd());
 
-const medusaConfig = {
+module.exports = defineConfig({
   projectConfig: {
-    databaseUrl: DATABASE_URL,
+    databaseUrl: process.env.DATABASE_URL,
     databaseLogging: false,
-    redisUrl: REDIS_URL,
-    workerMode: WORKER_MODE,
+    redisUrl: process.env.REDIS_URL,
+    workerMode: process.env.WORKER_MODE,
     http: {
-      adminCors: ADMIN_CORS,
-      authCors: AUTH_CORS,
-      storeCors: STORE_CORS,
-      jwtSecret: JWT_SECRET,
-      cookieSecret: COOKIE_SECRET
+      adminCors: process.env.ADMIN_CORS,
+      authCors: process.env.AUTH_CORS,
+      storeCors: process.env.STORE_CORS,
+      jwtSecret: process.env.JWT_SECRET,
+      cookieSecret: process.env.COOKIE_SECRET,
     },
-    build: {
-      rollupOptions: {
-        external: ["@medusajs/dashboard", "@medusajs/admin-shared"]
-      }
-    }
   },
   admin: {
-    backendUrl: BACKEND_URL,
-    disable: SHOULD_DISABLE_ADMIN,
+    backendUrl: process.env.BACKEND_PUBLIC_URL,
+    disable: process.env.SHOULD_DISABLE_ADMIN === 'true',
   },
   modules: [
     {
@@ -58,21 +26,21 @@ const medusaConfig = {
       resolve: '@medusajs/file',
       options: {
         providers: [
-          ...(MINIO_ENDPOINT && MINIO_ACCESS_KEY && MINIO_SECRET_KEY ? [{
+          ...(process.env.MINIO_ENDPOINT && process.env.MINIO_ACCESS_KEY && process.env.MINIO_SECRET_KEY ? [{
             resolve: './src/modules/minio-file',
             id: 'minio',
             options: {
-              endPoint: MINIO_ENDPOINT,
-              accessKey: MINIO_ACCESS_KEY,
-              secretKey: MINIO_SECRET_KEY,
-              bucket: MINIO_BUCKET
+              endPoint: process.env.MINIO_ENDPOINT,
+              accessKey: process.env.MINIO_ACCESS_KEY,
+              secretKey: process.env.MINIO_SECRET_KEY,
+              bucket: process.env.MINIO_BUCKET,
             }
           }] : [{
             resolve: '@medusajs/file-local',
             id: 'local',
             options: {
               upload_dir: 'static',
-              backend_url: `${BACKEND_URL}/static`
+              backend_url: `${process.env.BACKEND_PUBLIC_URL}/static`,
             }
           }])
         ]
@@ -83,22 +51,22 @@ const medusaConfig = {
       resolve: '@medusajs/notification',
       options: {
         providers: [
-          ...(RESEND_API_KEY && RESEND_FROM_EMAIL ? [{
+          ...(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL ? [{
             resolve: './src/modules/resend',
             id: 'resend',
             options: {
               channels: ['email'],
-              api_key: RESEND_API_KEY,
-              from: RESEND_FROM_EMAIL
+              api_key: process.env.RESEND_API_KEY,
+              from: process.env.RESEND_FROM_EMAIL,
             }
           }] : []),
-          ...(SENDGRID_API_KEY && SENDGRID_FROM_EMAIL ? [{
+          ...(process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL ? [{
             resolve: '@medusajs/notification-sendgrid',
             id: 'sendgrid',
             options: {
               channels: ['email'],
-              api_key: SENDGRID_API_KEY,
-              from: SENDGRID_FROM_EMAIL
+              api_key: process.env.SENDGRID_API_KEY,
+              from: process.env.SENDGRID_FROM_EMAIL,
             }
           }] : [])
         ]
@@ -109,29 +77,22 @@ const medusaConfig = {
       resolve: '@medusajs/payment',
       options: {
         providers: [
-          ...(STRIPE_API_KEY && STRIPE_WEBHOOK_SECRET ? [{
+          ...(process.env.STRIPE_API_KEY && process.env.STRIPE_WEBHOOK_SECRET ? [{
             resolve: '@medusajs/payment-stripe',
             id: 'stripe',
             options: {
-              apiKey: STRIPE_API_KEY,
-              webhookSecret: STRIPE_WEBHOOK_SECRET,
-            },
+              apiKey: process.env.STRIPE_API_KEY,
+              webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+            }
           }] : []),
-          ...(MEDUSAJS_PAYMENT_API_KEY ? [{
-            resolve: './src/modules/payment-medusajs',
-            id: 'medusajs-payment',
-            options: {
-              api_key: MEDUSAJS_PAYMENT_API_KEY,
-            },
-          }] : []),
-          ...(AURPAY_API_KEY ? [{
+          ...(process.env.AURPAY_API_KEY ? [{
             resolve: './src/modules/aurpay',
             id: 'aurpay',
             options: {
-              api_key: AURPAY_API_KEY,
-              environment: AURPAY_ENVIRONMENT || "production",
-            },
-          }] : []),
+              api_key: process.env.AURPAY_API_KEY,
+              environment: process.env.AURPAY_ENVIRONMENT || 'production',
+            }
+          }] : [])
         ]
       }
     },
@@ -140,13 +101,13 @@ const medusaConfig = {
       resolve: '@medusajs/medusa/search',
       options: {
         providers: [
-          ...(MEILISEARCH_HOST && MEILISEARCH_ADMIN_KEY ? [{
+          ...(process.env.MEILISEARCH_HOST && process.env.MEILISEARCH_ADMIN_KEY ? [{
             resolve: '@rokmohar/medusa-plugin-meilisearch',
             id: 'meilisearch',
             options: {
               config: {
-                host: MEILISEARCH_HOST,
-                apiKey: MEILISEARCH_ADMIN_KEY,
+                host: process.env.MEILISEARCH_HOST,
+                apiKey: process.env.MEILISEARCH_ADMIN_KEY,
               }
             }
           }] : [])
@@ -154,6 +115,4 @@ const medusaConfig = {
       }
     },
   ]
-};
-
-module.exports = defineConfig(medusaConfig);
+});

@@ -1,4 +1,5 @@
-- [x] Reemplazar completamente `backend/src/modules/payment-medusajs/services/medusajs-payment.ts` con el contenido provisto por el usuario.
-- [x] Verificar que el archivo refleje los cambios solicitados (métodos abstractos y firmas).
-- [ ] Hacer commit con mensaje: `fix: implement missing abstract methods in payment provider`.
-- [ ] Push a `main`.
+# Medusa Config Fix TODO ✅
+
+- [x] 1. Corregir el import: Change `from '@medusajs/utils'` to `from '@medusajs/framework/utils'` in backend/medusa-config.js
+- [x] 2. Corregir el export: Change `export default defineConfig(medusaConfig);` to `module.exports = defineConfig(medusaConfig);` in backend/medusa-config.js
+- [x] 3. Verificar los cambios: Check head/tail of backend/medusa-config.js (Verified via final_file_content)

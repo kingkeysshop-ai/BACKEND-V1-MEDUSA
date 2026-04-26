@@ -1,8 +1,14 @@
 import {
   AbstractPaymentProvider,
-  CreatePaymentSessionInput,
-  PaymentSessionStatus,
   MedusaError,
+  PaymentSessionStatus,
+  PaymentActions,
+  CreatePaymentSessionInput,
+  GetPaymentStatusInput,
+  GetPaymentStatusOutput,
+  RefundPaymentInput,
+  RefundPaymentOutput,
+  WebhookActionResult,
 } from "@medusajs/framework/utils";
 
 interface AurpayPaymentServiceOptions {
@@ -70,18 +76,15 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
 
   /**
    * Inicia una sesión de pago creando un orden en Aurpay
-   * 
-   * @param context - Contiene amount, currency_code y contexto adicional
-   * @returns Objeto con id, data y payment_url
    */
   async initiatePayment(
-    context: CreatePaymentSessionInput
+    input: CreatePaymentSessionInput
   ): Promise<{
     id: string;
     data: Record<string, unknown>;
     payment_url?: string;
   }> {
-    const { amount, currency_code } = context;
+    const { amount, currency_code } = input;
 
     if (!amount || !currency_code) {
       throw new MedusaError(
@@ -114,7 +117,10 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
    */
   async authorizePayment(
     paymentSessionData: Record<string, unknown>
-  ): Promise<{ status: PaymentSessionStatus; data: Record<string, unknown> }> {
+  ): Promise<{
+    status: PaymentSessionStatus;
+    data: Record<string, unknown>;
+  }> {
     const orderId = (paymentSessionData.data as any)?.order_id;
 
     if (!orderId) {
@@ -127,12 +133,12 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
     const order = await this.request(`/v1/orders/${orderId}`);
 
     if (order.status === "paid" || order.status === "confirmed") {
-      return { status: "authorized", data: paymentSessionData };
+      return { status: PaymentSessionStatus.AUTHORIZED, data: paymentSessionData };
     } else if (order.status === "pending") {
-      return { status: "pending", data: paymentSessionData };
+      return { status: PaymentSessionStatus.PENDING, data: paymentSessionData };
     }
 
-    return { status: "requires_action", data: paymentSessionData };
+    return { status: PaymentSessionStatus.REQUIRES_MORE, data: paymentSessionData };
   }
 
   /**
@@ -168,14 +174,23 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
    * Obtiene el estado actual de un pago
    */
   async getPaymentStatus(
-    paymentSessionData: Record<string, unknown>
-  ): Promise<string> {
-    const orderId = (paymentSessionData.data as any)?.order_id;
+    input: GetPaymentStatusInput
+  ): Promise<GetPaymentStatusOutput> {
+    const orderId = (input.data as any)?.order_id;
 
-    if (!orderId) return "not_started";
+    if (!orderId) return { status: PaymentSessionStatus.NOT_STARTED };
 
     const order = await this.request(`/v1/orders/${orderId}`);
-    return order.status || "pending";
+    
+    if (order.status === "paid" || order.status === "confirmed") {
+      return { status: PaymentSessionStatus.AUTHORIZED };
+    } else if (order.status === "pending") {
+      return { status: PaymentSessionStatus.PENDING };
+    } else if (order.status === "failed") {
+      return { status: PaymentSessionStatus.CANCELED };
+    }
+
+    return { status: PaymentSessionStatus.PENDING };
   }
 
   /**
@@ -204,26 +219,25 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
    * Actualiza un pago (no soportado por Aurpay post-creación)
    */
   async updatePayment(
-    context: CreatePaymentSessionInput
+    input: CreatePaymentSessionInput
   ): Promise<CreatePaymentSessionInput> {
-    return context;
+    return input;
   }
 
   /**
    * Procesa un webhook de Aurpay y determina la acción a tomar
-   * 
-   * @param data - Payload del webhook
-   * @returns { action, data } con la acción y los datos relevantes
    */
-  async getWebhookActionAndData(data: Record<string, unknown>): Promise<{
-    action: "capture" | "refund" | "cancel" | "not_actionable";
+  async getWebhookActionAndData(data: {
     data: Record<string, unknown>;
-  }> {
-    const { order_id, status, amount } = data;
+    rawData: string | Buffer;
+    headers: Record<string, unknown>;
+  }): Promise<WebhookActionResult> {
+    const payload = data.data;
+    const { order_id, status, amount } = payload;
 
     if (status === "paid" || status === "confirmed") {
       return {
-        action: "capture",
+        action: PaymentActions.CAPTURED,
         data: {
           session_id: order_id,
           amount: amount,
@@ -233,7 +247,7 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
 
     if (status === "cancelled") {
       return {
-        action: "cancel",
+        action: PaymentActions.CANCELED,
         data: {
           session_id: order_id,
         },
@@ -241,7 +255,7 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
     }
 
     return {
-      action: "not_actionable",
+      action: PaymentActions.NOT_ACTIONABLE,
       data,
     };
   }
@@ -249,11 +263,18 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
   /**
    * Realiza un reembolso de un pago
    */
-  async refundPayment(input: {
-    order_id: string;
-    amount?: number;
-  }): Promise<Record<string, unknown>> {
-    const { order_id, amount } = input;
+  async refundPayment(
+    input: RefundPaymentInput
+  ): Promise<RefundPaymentOutput> {
+    const { payment_session_data, amount } = input;
+    const orderId = (payment_session_data.data as any)?.order_id;
+
+    if (!orderId) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_ARGUMENT,
+        "Missing order_id in payment session data"
+      );
+    }
 
     const refundData: Record<string, unknown> = {};
 
@@ -261,7 +282,7 @@ export default class AurpayPaymentService extends AbstractPaymentProvider<Aurpay
       refundData.amount = amount.toString();
     }
 
-    const refund = await this.request(`/v1/orders/${order_id}/refunds`, {
+    const refund = await this.request(`/v1/orders/${orderId}/refunds`, {
       method: "POST",
       body: JSON.stringify(refundData),
     });

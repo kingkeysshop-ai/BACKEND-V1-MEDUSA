@@ -1,6 +1,26 @@
 "use client"
 
 import { Popover, PopoverPanel, Transition } from "@headlessui/react"
+
+<style jsx>{`
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .animate-slide-in-left {
+    animation: slideInLeft 0.35s ease-out forwards;
+  }
+  .delay-0 { animation-delay: 0ms; }
+  .delay-60 { animation-delay: 60ms; }
+  .delay-120 { animation-delay: 120ms; }
+  .delay-180 { animation-delay: 180ms; }
+`}</style>
 import { ArrowRightMini, XMark } from "@medusajs/icons"
 import { clx, useToggleState } from "@medusajs/ui"
 import { Fragment } from "react"
@@ -91,22 +111,25 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
 
                       {/* Links de navegacion */}
                       <ul className="flex flex-col gap-2">
-                        {Object.entries(SideMenuItems).map(([name, href]) => (
-                          <li key={name}>
-                            <LocalizedClientLink
-                              href={href}
-                              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-base font-medium ${pathname === href || (href !== "/" && pathname.includes(href)) ? "text-yellow-400 bg-yellow-400/10 border-l-2 border-yellow-400 pl-[14px]" : "text-gray-300 hover:text-yellow-400 hover:bg-yellow-400/10"}`}
-                              onClick={close}
-                              data-testid={`${name.toLowerCase()}-link`}
-                            >
-                              {name === "Inicio" && "🏠"}
-                              {name === "Tienda" && "🛒"}
-                              {name === "Mi Cuenta" && "👤"}
-                              {name === "Carrito" && "🛍️"}
-                              {name}
-                            </LocalizedClientLink>
-                          </li>
-                        ))}
+                        {Object.entries(SideMenuItems).map(([name, href], index) => {
+                          const delays = ['delay-0', 'delay-60', 'delay-120', 'delay-180']
+                          return (
+                            <li key={name} className={`animate-slide-in-left ${delays[index] || delays[0]}`}>
+                              <LocalizedClientLink
+                                href={href}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-base font-medium ${pathname === href || (href !== "/" && pathname.includes(href)) ? "text-yellow-400 bg-yellow-400/10 border-l-2 border-yellow-400 pl-[14px]" : "text-gray-300 hover:text-yellow-400 hover:bg-yellow-400/10"}`}
+                                onClick={close}
+                                data-testid={`${name.toLowerCase()}-link`}
+                              >
+                                {name === "Inicio" && "🏠"}
+                                {name === "Tienda" && "🛒"}
+                                {name === "Mi Cuenta" && "👤"}
+                                {name === "Carrito" && "🛍️"}
+                                {name}
+                              </LocalizedClientLink>
+                            </li>
+                          )
+                        })}
                       </ul>
                     </div>
 

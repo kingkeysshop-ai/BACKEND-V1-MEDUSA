@@ -96,3 +96,9 @@ export const SHOULD_DISABLE_ADMIN = process.env.MEDUSA_DISABLE_ADMIN === 'true'
  * (optional) MedusaJS Payment API key
  */
 export const MEDUSAJS_PAYMENT_API_KEY = process.env.MEDUSAJS_PAYMENT_API_KEY
+
+/**
+ * (optional) Aurpay crypto payment API key and environment
+ */
+export const AURPAY_API_KEY = process.env.AURPAY_API_KEY
+export const AURPAY_ENVIRONMENT = process.env.AURPAY_ENVIRONMENT || "production"

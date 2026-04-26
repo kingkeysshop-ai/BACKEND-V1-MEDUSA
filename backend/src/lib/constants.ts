@@ -18,7 +18,6 @@ export const BACKEND_URL = process.env.BACKEND_PUBLIC_URL ?? process.env.RAILWAY
  * Database URL for Postgres instance used by the backend
  */
 export const DATABASE_URL = process.env.DATABASE_URL || "postgres://localhost/medusa"
-
 /**
  * (optional) Redis URL for Redis instance used by the backend
  */
@@ -101,4 +100,4 @@ export const MEDUSAJS_PAYMENT_API_KEY = process.env.MEDUSAJS_PAYMENT_API_KEY
  * (optional) Aurpay crypto payment API key and environment
  */
 export const AURPAY_API_KEY = process.env.AURPAY_API_KEY
-export const AURPAY_ENVIRONMENT = process.env.AURPAY_ENVIRONMENT || "production"
+export const AURPAY_ENVIRONMENT = process.env.AURPAY_ENVIRONMENT

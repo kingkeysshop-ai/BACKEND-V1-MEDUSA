@@ -1,4 +1,4 @@
-import { loadEnv, Modules, defineConfig } from '@medusajs/utils';
+import { loadEnv, Modules, defineConfig } from '@medusajs/framework/utils';
 import {
   ADMIN_CORS,
   AUTH_CORS,
@@ -156,4 +156,4 @@ const medusaConfig = {
   ]
 };
 
-export default defineConfig(medusaConfig);
+module.exports = defineConfig(medusaConfig);

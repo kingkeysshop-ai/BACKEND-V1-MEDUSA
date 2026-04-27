@@ -1,12 +1,13 @@
 "use client"
 
-import { isCryptomus, isManual, isStripeLike } from "@lib/constants"
+import { isAurpay, isCryptomus, isManual, isStripeLike } from "@lib/constants"
 import { placeOrder } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
 import { useElements, useStripe } from "@stripe/react-stripe-js"
 import React, { useState } from "react"
 import ErrorMessage from "../error-message"
 import CryptomusPaymentButton from "./cryptomus-button"
+import AurpayPaymentButton from "./aurpay-button"
 
 type PaymentButtonProps = {
   cart: HttpTypes.StoreCart
@@ -42,6 +43,14 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
     case isCryptomus(paymentSession?.provider_id):
       return (
         <CryptomusPaymentButton
+          cart={cart}
+          notReady={notReady}
+          data-testid={dataTestId}
+        />
+      )
+    case isAurpay(paymentSession?.provider_id):
+      return (
+        <AurpayPaymentButton
           cart={cart}
           notReady={notReady}
           data-testid={dataTestId}

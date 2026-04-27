@@ -53,14 +53,14 @@ const paymentProviders = [
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     }
   }] : []),
-  ...(process.env.AURPAY_API_KEY ? [{
+  {
     resolve: './src/modules/aurpay',
     id: 'aurpay',
     options: {
-      api_key: process.env.AURPAY_API_KEY,
+      api_key: process.env.AURPAY_API_KEY || '',
       environment: process.env.AURPAY_ENVIRONMENT || 'production',
     }
-  }] : []),
+  }
 ];
 
 // Módulos opcionales (solo se incluyen si están configurados)

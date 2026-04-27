@@ -1,5 +1,26 @@
-# Medusa Config Fix TODO ✅
+# Medusa v2 TypeScript Build Fix - Progress Tracker
 
-- [x] 1. Corregir el import: Change `from '@medusajs/utils'` to `from '@medusajs/framework/utils'` in backend/medusa-config.js
-- [x] 2. Corregir el export: Change `export default defineConfig(medusaConfig);` to `module.exports = defineConfig(medusaConfig);` in backend/medusa-config.js
-- [x] 3. Verificar los cambios: Check head/tail of backend/medusa-config.js (Verified via final_file_content)
+## Plan Steps
+
+### 1. Update aurpay-payment.ts for Medusa v2 compatibility [ ]
+   - Remove v1 type imports
+   - Replace enums with string literals  
+   - Use `any` / `Record<string, unknown>` types
+   - Preserve existing Aurpay `/v1/orders` API integration
+
+### 2. Test local build [ ]
+   ```bash
+   cd backend
+   pnpm run build
+   ```
+
+### 3. Test Docker build [ ]
+   - Run docker-compose or railway build
+
+### 4. Verify Aurpay payment flow [ ]
+   - Create test order
+   - Test webhook handling
+
+## Notes
+- Reference: medusajs-payment.ts shows correct v2 pattern
+- User provided alternative rewrite - decide minimal fix vs full rewrite

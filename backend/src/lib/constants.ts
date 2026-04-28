@@ -101,3 +101,12 @@ export const MEDUSAJS_PAYMENT_API_KEY = process.env.MEDUSAJS_PAYMENT_API_KEY
  */
 export const AURPAY_API_KEY = process.env.AURPAY_API_KEY
 export const AURPAY_ENVIRONMENT = process.env.AURPAY_ENVIRONMENT
+
+/**
+ * (optional) Authorize.net payment gateway credentials
+ */
+export const AUTHORIZE_NET_LOGIN_ID = process.env.AUTHORIZE_NET_LOGIN_ID
+export const AUTHORIZE_NET_TRANSACTION_KEY = process.env.AUTHORIZE_NET_TRANSACTION_KEY
+export const AUTHORIZE_NET_PUBLIC_CLIENT_KEY = process.env.AUTHORIZE_NET_PUBLIC_CLIENT_KEY
+export const AUTHORIZE_NET_ENVIRONMENT = process.env.AUTHORIZE_NET_ENVIRONMENT || 'sandbox'
+export const AUTHORIZE_NET_WEBHOOK_SECRET = process.env.AUTHORIZE_NET_WEBHOOK_SECRET

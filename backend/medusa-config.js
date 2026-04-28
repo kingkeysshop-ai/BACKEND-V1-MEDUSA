@@ -60,7 +60,18 @@ const paymentProviders = [
       api_key: process.env.AURPAY_API_KEY || '',
       environment: process.env.AURPAY_ENVIRONMENT || 'production',
     }
-  }
+  },
+  ...(process.env.AUTHORIZE_NET_LOGIN_ID && process.env.AUTHORIZE_NET_TRANSACTION_KEY ? [{
+    resolve: './src/modules/authorize-net',
+    id: 'authorizenet',
+    options: {
+      login_id: process.env.AUTHORIZE_NET_LOGIN_ID,
+      transaction_key: process.env.AUTHORIZE_NET_TRANSACTION_KEY,
+      public_client_key: process.env.AUTHORIZE_NET_PUBLIC_CLIENT_KEY || '',
+      environment: process.env.AUTHORIZE_NET_ENVIRONMENT || 'sandbox',
+      webhook_secret: process.env.AUTHORIZE_NET_WEBHOOK_SECRET || '',
+    }
+  }] : []),
 ];
 
 // Módulos opcionales (solo se incluyen si están configurados)

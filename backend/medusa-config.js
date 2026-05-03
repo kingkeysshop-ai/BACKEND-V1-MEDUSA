@@ -25,7 +25,7 @@ const fileProviders = process.env.MINIO_ENDPOINT && process.env.MINIO_ACCESS_KEY
 
 const notificationProviders = [
   ...(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL ? [{
-    resolve: './src/modules/resend',
+    resolve: './src/modules/email-notifications',
     id: 'resend',
     options: {
       channels: ['email'],
@@ -112,6 +112,9 @@ module.exports = defineConfig({
       key: Modules.FILE,
       resolve: '@medusajs/file',
       options: { providers: fileProviders }
+    },
+    {
+      resolve: "./src/modules/license-manager",
     },
     ...optionalModules,
   ],

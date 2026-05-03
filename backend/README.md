@@ -1,4 +1,3 @@
-# 🛍️ King Keys — Medusa 2.0 Backend
 
 Production-ready Medusa 2.0 backend prepared for:
 - ✅ **Local development** via Docker Compose (Postgres + Redis + MinIO)

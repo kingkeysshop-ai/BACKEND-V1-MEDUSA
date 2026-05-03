@@ -1,26 +1,32 @@
-# Medusa v2 TypeScript Build Fix - Progress Tracker
+# License Manager Implementation TODO
 
-## Plan Steps
+## ✅ Plan Approved & Understood (Medusa v2 specifics)
 
-### 1. Update aurpay-payment.ts for Medusa v2 compatibility [ ]
-   - Remove v1 type imports
-   - Replace enums with string literals  
-   - Use `any` / `Record<string, unknown>` types
-   - Preserve existing Aurpay `/v1/orders` API integration
+## 📁 1. Create Module Files [0/3]
+- [ ] `backend/src/modules/license-manager/models/license-key.ts` (MikroORM model)
+- [ ] `backend/src/modules/license-manager/service.ts` (MedusaService + custom methods)
+- [ ] `backend/src/modules/license-manager/index.ts` (module export)
 
-### 2. Test local build [ ]
-   ```bash
-   cd backend
-   pnpm run build
-   ```
+## 📧 2. Email Template [1/2]
+- [ ] `backend/src/modules/email-notifications/templates/license-delivery.tsx`
+- [ ] Edit `backend/src/modules/email-notifications/templates/index.tsx` (add LICENSE_DELIVERY)
 
-### 3. Test Docker build [ ]
-   - Run docker-compose or railway build
+## ⚙️ 3. Module Registration [0/1]
+- [ ] Edit `backend/medusa-config.js` (add license-manager module)
 
-### 4. Verify Aurpay payment flow [ ]
-   - Create test order
-   - Test webhook handling
+## 🔄 4. Workflow [0/1]
+- [ ] `backend/src/workflows/assign-licenses-on-order.ts` (createWorkflow + steps)
 
-## Notes
-- Reference: medusajs-payment.ts shows correct v2 pattern
-- User provided alternative rewrite - decide minimal fix vs full rewrite
+## 🔔 5. Subscriber [0/1]
+- [ ] `backend/src/subscribers/order-placed-licenses.ts` (NEW file, order.placed event)
+
+## ✅ 6. Verification [0/2]
+- [ ] `cd backend && pnpm tsc --noEmit`
+- [ ] Generate migration: `cd backend && pnpm medusa db:generate license-manager`
+
+## 📄 Final Deliverables
+- [ ] List of files created/modified
+- [ ] CSV import example
+- [ ] Commit message
+
+**Next Step:** Create `models/license-key.ts`

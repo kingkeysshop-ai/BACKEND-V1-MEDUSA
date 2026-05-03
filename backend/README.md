@@ -39,7 +39,7 @@ docker compose logs -f medusa
 
 ## 🛠️ Local Dev (without Docker)
 
-Requires **Node 22**, **pnpm 9**, **Postgres 14+**, **Redis** (optional).
+Requires **Node 24**, **pnpm 9**, **Postgres 14+**, **Redis** (optional).
 
 ```bash
 pnpm install

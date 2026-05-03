@@ -2,7 +2,7 @@
 # https://nixpacks.com/docs/configuration/file
 
 [phases.setup]
-nixPkgs = ["nodejs_22", "pnpm-9_x"]
+nixPkgs = ["nodejs_24", "pnpm-9_x"]
 
 [phases.install]
 cmds = ["pnpm install --frozen-lockfile"]
@@ -14,5 +14,5 @@ cmds = ["pnpm run build"]
 cmd = "pnpm run start"
 
 [variables]
-NODE_VERSION = "22"
+NODE_VERSION = "24"
 NPM_CONFIG_PRODUCTION = "false"

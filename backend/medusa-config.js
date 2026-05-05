@@ -114,10 +114,10 @@ module.exports = defineConfig({
       resolve: '@medusajs/file',
       options: { providers: fileProviders }
     },
-    // ✅ CORRECCIÓN: Se añadió la propiedad 'key' requerida
+    // FIX: guión → guión bajo (Medusa solo permite alfanumérico y _)
     {
-      key: 'license-manager', 
-      resolve: "./src/modules/license-manager",
+      key: 'license_manager',
+      resolve: './src/modules/license-manager',
     },
     ...(process.env.REDIS_URL ? [
       {

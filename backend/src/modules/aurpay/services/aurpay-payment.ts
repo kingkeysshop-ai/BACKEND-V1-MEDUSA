@@ -105,210 +105,345 @@ class AurpayPaymentService extends AbstractPaymentProvider<AurpayOptions> {
     }
 
     return data
-  }  // ==================== MÉTODOS MEDUSA v2 ====================
+  }
+
+  // ==================== CONVERSIÓN DE MONEDA ====================
+
+  private convertToUsd(amount: number, currencyCode: string): number {
+    const normalized = currencyCode.toLowerCase()
+    const amountInMajorUnit = Number(amount) / 100
+
+    if (normalized === "usd") {
+      return Number(amountInMajorUnit.toFixed(2))
+    }
+
+    if (normalized === "cop") {
+      const rate = Number(process.env.COP_USD_RATE) || 4000
+      const usd = amountInMajorUnit / rate
+      return Number(usd.toFixed(2))
+    }
+
+    console.warn(
+      `[Aurpay] Unsupported currency "${currencyCode}". Treating as USD.`
+    )
+    return Number(amountInMajorUnit.toFixed(2))
+  }
+
+  // ==================== MÉTODOS MEDUSA v2 ====================
 
   async initiatePayment(
     input: InitiatePaymentInput
   ): Promise<InitiatePaymentOutput> {
-    const { amount, currency_code } = input
+    const { amount, currency_code, context } = input
 
-    // Aurpay trabaja en USD. Conversión simple desde COP.
-    // TODO: reemplazar por tasa de cambio real (API)
-    const priceUsd =
-      currency_code.toLowerCase() === "cop"
-        ? Number(amount) / 4000
-        : Number(amount) / 100
+    const priceUsd = this.convertToUsd(Number(amount), currency_code)
 
     const frontendUrl = process.env.FRONTEND_URL || "https://kingkeys.net"
     const backendUrl = process.env.BACKEND_URL || "https://kingkeys.net"
 
+    const merchantOrderId =
+      (context as any)?.session_id ||
+      (context as any)?.idempotency_key ||
+      `medusa_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+
     const payload = {
+      merchant_order_id: merchantOrderId,
       price: priceUsd,
       currency: "USD",
-      succeed_url: `${frontendUrl}/order/confirmed`,
-      timeout_url: `${frontendUrl}/checkout`,
-      callback_url: `${backendUrl}/webhooks/aurpay`,
-      timeout_callback: `${backendUrl}/webhooks/aurpay`,
+      notify_url: `${backendUrl}/aurpay/webhook`,
+      redirect_url: `${frontendUrl}/checkout/confirmation`,
+      cancel_url: `${frontendUrl}/checkout`,
     }
 
-    const result = await this.callAurpayAPI(
-      "POST",
-      "/api/order/pay-url",
-      payload
-    )
+    console.log("[Aurpay] initiatePayment payload:", payload)
 
-    const aurpayOrderId = result.order_id || result.data?.order_id
-    const payUrl = result.pay_url || result.data?.pay_url
+    try {
+      const response = await this.callAurpayAPI(
+        "POST",
+        "/openapi/v1/payment/order",
+        payload
+      )
 
-    return {
-      id: aurpayOrderId,
-      data: {
-        aurpay_order_id: aurpayOrderId,
-        pay_url: payUrl,
-        raw: result,
-      },
+      console.log("[Aurpay] initiatePayment response:", response)
+
+      return {
+        id: response.data?.order_id || merchantOrderId,
+        data: {
+          order_id: response.data?.order_id,
+          merchant_order_id: merchantOrderId,
+          pay_url: response.data?.pay_url,
+          price_usd: priceUsd,
+          original_amount: amount,
+          original_currency: currency_code,
+          status: "pending",
+        },
+      }
+    } catch (error: any) {
+      console.error("[Aurpay] initiatePayment error:", error)
+      throw new Error(`Aurpay initiatePayment failed: ${error.message}`)
     }
   }
 
   async authorizePayment(
     input: AuthorizePaymentInput
   ): Promise<AuthorizePaymentOutput> {
-    const paymentSessionData = input.data ?? {}
-    const orderId = paymentSessionData.aurpay_order_id as string | undefined
-
-    if (!orderId) {
-      return {
-        status: "pending",
-        data: paymentSessionData,
-      }
-    }
-
-    // El webhook es quien marca AUTHORIZED. Aquí devolvemos el último estado conocido.
+    const status = await this.getPaymentStatus(input as any)
     return {
-      status: "authorized",
-      data: paymentSessionData,
+      status: status.status,
+      data: input.data,
     }
   }
 
   async capturePayment(
     input: CapturePaymentInput
   ): Promise<CapturePaymentOutput> {
-    // Aurpay captura automáticamente al recibir el pago on-chain.
-    return {
-      data: input.data ?? {},
-    }
+    return { data: input.data }
   }
 
   async cancelPayment(
     input: CancelPaymentInput
   ): Promise<CancelPaymentOutput> {
-    return {
-      data: input.data ?? {},
-    }
+    return { data: input.data }
   }
 
   async deletePayment(
     input: DeletePaymentInput
   ): Promise<DeletePaymentOutput> {
-    return {
-      data: input.data ?? {},
-    }
+    return { data: input.data }
   }
 
   async refundPayment(
     input: RefundPaymentInput
   ): Promise<RefundPaymentOutput> {
-    // Aurpay no soporta refunds automáticos on-chain.
-    // Se deben procesar manualmente desde el dashboard.
-    console.warn(
-      "[Aurpay] Refunds must be processed manually from Aurpay dashboard"
-    )
-    return {
-      data: input.data ?? {},
-    }
+    console.warn("[Aurpay] Refunds must be processed manually")
+    return { data: input.data }
   }
 
   async retrievePayment(
     input: RetrievePaymentInput
   ): Promise<RetrievePaymentOutput> {
-    const paymentSessionData = input.data ?? {}
-    const orderId = paymentSessionData.aurpay_order_id as string | undefined
-
+    const orderId = (input.data as any)?.order_id
     if (!orderId) {
-      return { data: paymentSessionData }
+      return { data: input.data }
     }
 
-    // Opcional: consultar estado en Aurpay.
-    // const result = await this.callAurpayAPI("GET", `/api/order/status?order_id=${orderId}`)
-    // return { data: { ...paymentSessionData, status: result.status } }
-
-    return { data: paymentSessionData }
+    try {
+      const response = await this.callAurpayAPI(
+        "GET",
+        `/openapi/v1/payment/order/${orderId}`
+      )
+      return {
+        data: { ...input.data, ...response.data },
+      }
+    } catch (error: any) {
+      console.error("[Aurpay] retrievePayment error:", error)
+      return { data: input.data }
+    }
   }
 
   async updatePayment(
     input: UpdatePaymentInput
   ): Promise<UpdatePaymentOutput> {
-    // Si cambia el monto, re-iniciamos el payment en Aurpay.
-    const initiated = await this.initiatePayment({
-      amount: input.amount,
-      currency_code: input.currency_code,
-      context: input.context,
-      data: input.data,
-    } as InitiatePaymentInput)
-
-    return {
-      data: initiated.data ?? {},
-    }
+    return { data: input.data }
   }
-    async getPaymentStatus(
+
+  async getPaymentStatus(
     input: GetPaymentStatusInput
   ): Promise<GetPaymentStatusOutput> {
-    const paymentSessionData = input.data ?? {}
-    const orderId = paymentSessionData.aurpay_order_id as string | undefined
-
+    const orderId = (input.data as any)?.order_id
     if (!orderId) {
-      return {
-        status: "pending",
-        data: paymentSessionData,
-      }
+      return { status: "pending" as PaymentSessionStatus }
     }
 
-    // Por defecto devolvemos PENDING. El webhook actualizará a AUTHORIZED/CAPTURED.
-    return {
-      status: "pending",
-      data: paymentSessionData,
+    try {
+      const response = await this.callAurpayAPI(
+        "GET",
+        `/openapi/v1/payment/order/${orderId}`
+      )
+
+      const aurpayStatus = response.data?.status?.toLowerCase()
+
+      let status: PaymentSessionStatus = "pending"
+      if (aurpayStatus === "paid" || aurpayStatus === "completed") {
+        status = "captured"
+      } else if (aurpayStatus === "failed" || aurpayStatus === "expired") {
+        status = "error"
+      } else if (aurpayStatus === "canceled") {
+        status = "canceled"
+      }
+
+      return {
+        status,
+        data: { ...input.data, ...response.data },
+      }
+    } catch (error) {
+      console.error("[Aurpay] getPaymentStatus error:", error)
+      return { status: "pending" as PaymentSessionStatus }
     }
   }
 
   // ==================== WEBHOOK ====================
 
+  async validateWebhookSignature(
+    rawBody: string,
+    signature: string,
+    timestamp: string,
+    secret: string = this.options_.callbackSecret
+  ): Promise<boolean> {
+    if (!signature || !timestamp) return false
+
+    const payloadToSign = `${timestamp}${rawBody}`
+
+    const calculatedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(payloadToSign, "utf-8")
+      .digest("hex")
+
+    try {
+      const signatureBuffer = Buffer.from(signature, "hex")
+      const calculatedBuffer = Buffer.from(calculatedSignature, "hex")
+
+      if (signatureBuffer.length !== calculatedBuffer.length) return false
+
+      return crypto.timingSafeEqual(signatureBuffer, calculatedBuffer)
+    } catch {
+      return false
+    }
+  }
+
+  async handleWebhookEvent(
+    orderId: string,
+    eventData: {
+      status: string
+      transactionId?: string
+      rawPayload: any
+    }
+  ): Promise<void> {
+    const { status } = eventData
+
+    // FIX: Medusa v2 usa `container` (sin guión bajo)
+    const orderService = (this.container as any).resolve("orderService")
+
+
+    try {
+      const order = await orderService.retrieve(orderId, {
+        relations: ["payment_collections", "payment_collections.transactions"],
+      })
+
+      type AurpayMappedStatus = "pending" | "completed" | "failed" | "refunded"
+      let newStatus: AurpayMappedStatus = "pending"
+
+      if (status === "success" || status === "paid" || status === "completed") {
+        newStatus = "completed"
+      } else if (status === "failed" || status === "cancelled") {
+        newStatus = "failed"
+      } else if (status === "refunded") {
+        newStatus = "refunded"
+      }
+
+      if (newStatus === "completed") {
+        await orderService.update(order.id, {
+          status: "completed",
+          payment_collections: order.payment_collections?.map((col: any) => ({
+            ...col,
+            status: "authorized",
+          })),
+        })
+      } else if (newStatus === "failed") {
+        await orderService.update(order.id, { status: "pending" })
+      }
+    } catch (error) {
+      console.error(`[Aurpay] Error al actualizar orden ${orderId}:`, error)
+      throw error
+    }
+  }
+
   async getWebhookActionAndData(
     payload: ProviderWebhookPayload["payload"]
   ): Promise<WebhookActionResult> {
+    const { data, headers, rawData } = payload as any
+
     try {
-      const data = (payload.data ?? {}) as any
+      const signature = headers?.["signature"] as string
+      const date = headers?.["date"] as string
 
-      // Verificar callback-token enviado por Aurpay en los headers.
-      const headers = ((payload as any).headers ?? {}) as Record<string, string>
-      const receivedToken =
-        headers["callback-token"] || headers["Callback-Token"]
+      if (signature && date) {
+        const rawBody =
+          typeof rawData === "string" ? rawData : JSON.stringify(data)
 
-      if (
-        this.options_.callbackToken &&
-        receivedToken !== this.options_.callbackToken
-      ) {
-        console.error("[Aurpay Webhook] Invalid callback-token")
+        const isValid = await this.validateWebhookSignature(
+          rawBody,
+          signature,
+          date
+        )
+
+        if (!isValid) {
+          console.error("[Aurpay] Webhook signature mismatch")
+          return { action: "not_supported" }
+        }
+      }
+
+      const callbackToken = headers?.["api-token"] as string
+      if (callbackToken && callbackToken !== this.options_.callbackToken) {
+        console.error("[Aurpay] Webhook token mismatch")
         return { action: "not_supported" }
       }
 
-      // Aurpay envía estados: "succeed", "timeout", "failed"
-      const status = data.status || data.pay_status
-      const sessionId = data.merchant_order_id || data.order_id
-      const amount = Number(data.price ?? data.amount ?? 0)
+      const aurpayStatus = (data as any)?.status?.toLowerCase()
+      const merchantOrderId = (data as any)?.merchant_order_id
+      const orderId = (data as any)?.order_id
+      const paidAmount = Number((data as any)?.price || 0)
 
-      if (status === "succeed" || status === "success") {
+      console.log("[Aurpay] Webhook received:", {
+        merchantOrderId,
+        orderId,
+        aurpayStatus,
+        paidAmount,
+      })
+
+      if (merchantOrderId) {
+        await this.handleWebhookEvent(merchantOrderId, {
+          status: aurpayStatus,
+          transactionId: orderId,
+          rawPayload: data,
+        }).catch((err) =>
+          console.error("[Aurpay] handleWebhookEvent error:", err)
+        )
+      }
+
+      if (aurpayStatus === "paid" || aurpayStatus === "completed") {
         return {
-          action: "authorized",
+          action: "captured",
           data: {
-            session_id: sessionId,
-            amount,
+            session_id: merchantOrderId,
+            amount: Math.round(paidAmount * 100),
           },
         }
       }
 
-      if (status === "timeout" || status === "failed") {
+      if (aurpayStatus === "failed" || aurpayStatus === "expired") {
         return {
           action: "failed",
           data: {
-            session_id: sessionId,
-            amount,
+            session_id: merchantOrderId,
+            amount: Math.round(paidAmount * 100),
+          },
+        }
+      }
+
+      if (aurpayStatus === "canceled") {
+        return {
+          action: "canceled",
+          data: {
+            session_id: merchantOrderId,
+            amount: Math.round(paidAmount * 100),
           },
         }
       }
 
       return { action: "not_supported" }
-    } catch (e: any) {
-      console.error("[Aurpay Webhook] Error:", e.message)
+    } catch (error: any) {
+      console.error("[Aurpay] Webhook error:", error)
       return { action: "not_supported" }
     }
   }

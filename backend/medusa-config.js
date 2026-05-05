@@ -53,17 +53,16 @@ const paymentProviders = [
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     }
   }] : []),
-  {
-  resolve: './src/modules/aurpay',
-  id: 'aurpay',
-  options: {
-    api_key: process.env.AURPAY_API_KEY || '',
-    environment: process.env.AURPAY_ENVIRONMENT || 'production',
-    callback_url: process.env.AURPAY_CALLBACK_URL || '',
-    succeed_url: process.env.AURPAY_SUCCEED_URL || '',
-    timeout_url: process.env.AURPAY_TIMEOUT_URL || '',
-  }
-},
+  ...(process.env.AURPAY_API_TOKEN && process.env.AURPAY_API_SECRET ? [{
+    resolve: './src/modules/aurpay',
+    id: 'aurpay',
+    options: {
+      apiToken: process.env.AURPAY_API_TOKEN,
+      apiSecret: process.env.AURPAY_API_SECRET,
+      callbackToken: process.env.AURPAY_CALLBACK_TOKEN || '',
+      callbackSecret: process.env.AURPAY_CALLBACK_SECRET || '',
+    }
+  }] : []),
   ...(process.env.AUTHORIZE_NET_LOGIN_ID && process.env.AUTHORIZE_NET_TRANSACTION_KEY ? [{
     resolve: './src/modules/authorize-net',
     id: 'authorizenet',
@@ -119,6 +118,28 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/license-manager",
     },
+    {
+      resolve: "./src/modules/digital-product",
+    },
+    ...(process.env.REDIS_URL ? [
+      {
+        key: Modules.EVENT_BUS,
+        resolve: '@medusajs/event-bus-redis',
+        options: {
+          redisUrl: process.env.REDIS_URL,
+        }
+      },
+      {
+        key: Modules.WORKFLOW_ENGINE,
+        resolve: '@medusajs/workflow-engine-redis',
+        options: {
+          redis: {
+            url: process.env.REDIS_URL,
+          }
+        }
+      }
+    ] : []),
     ...optionalModules,
   ],
+  plugins: []
 });

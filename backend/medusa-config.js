@@ -115,11 +115,8 @@ module.exports = defineConfig({
       resolve: '@medusajs/file',
       options: { providers: fileProviders }
     },
-    {
+       {
       resolve: "./src/modules/license-manager",
-    },
-    {
-      resolve: "./src/modules/digital-product",
     },
     ...(process.env.REDIS_URL ? [
       {

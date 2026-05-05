@@ -88,7 +88,6 @@ const optionalModules = [
     resolve: '@medusajs/payment',
     options: { providers: paymentProviders }
   }] : []),
-  // ⚠️ Modules.SEARCH eliminado — no existe en Medusa 2.x como módulo core
 ];
 
 module.exports = defineConfig({
@@ -115,7 +114,9 @@ module.exports = defineConfig({
       resolve: '@medusajs/file',
       options: { providers: fileProviders }
     },
-       {
+    // ✅ CORRECCIÓN: Se añadió la propiedad 'key' requerida
+    {
+      key: 'license-manager', 
       resolve: "./src/modules/license-manager",
     },
     ...(process.env.REDIS_URL ? [

@@ -54,13 +54,16 @@ const paymentProviders = [
     }
   }] : []),
   {
-    resolve: './src/modules/aurpay',
-    id: 'aurpay',
-    options: {
-      api_key: process.env.AURPAY_API_KEY || '',
-      environment: process.env.AURPAY_ENVIRONMENT || 'production',
-    }
-  },
+  resolve: './src/modules/aurpay',
+  id: 'aurpay',
+  options: {
+    api_key: process.env.AURPAY_API_KEY || '',
+    environment: process.env.AURPAY_ENVIRONMENT || 'production',
+    callback_url: process.env.AURPAY_CALLBACK_URL || '',
+    succeed_url: process.env.AURPAY_SUCCEED_URL || '',
+    timeout_url: process.env.AURPAY_TIMEOUT_URL || '',
+  }
+},
   ...(process.env.AUTHORIZE_NET_LOGIN_ID && process.env.AUTHORIZE_NET_TRANSACTION_KEY ? [{
     resolve: './src/modules/authorize-net',
     id: 'authorizenet',

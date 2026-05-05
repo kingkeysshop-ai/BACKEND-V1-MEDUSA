@@ -1,10 +1,8 @@
-// src/modules/license-manager/index.ts
-import { ModuleDeclaration, ModuleService } from "@medusajs/types"
+import LicenseManagerService from "./service"
+import { Module } from "@medusajs/framework/utils"
 
-// Configuración vacía para evitar que Medusa lance un error de módulo faltante
-export const MODULE_KEY = "licenseManager"
+export const LICENSE_MANAGER_MODULE = "license_manager"
 
-export default {
-  // Si necesitas definir la clase del servicio, puedes hacerlo aquí,
-  // pero a veces solo la existencia del archivo basta.
-} as ModuleDeclaration
+export default Module(LICENSE_MANAGER_MODULE, {
+  service: LicenseManagerService,
+})

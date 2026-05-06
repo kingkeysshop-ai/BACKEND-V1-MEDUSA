@@ -1,0 +1,133 @@
+# ============================================
+# King Keys - Full Stack Local Dev
+# ============================================
+# Runs: Postgres + Redis + MinIO + Medusa Backend + Next.js Storefront
+#
+# Usage:
+#   cd "c:/KING KEYS S"
+#   docker compose up --build
+#
+# Then:
+#   Admin:     http://localhost:9000/app
+#   Storefront http://localhost:8000
+#
+# Stop:
+#   docker compose down
+# ============================================
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kingkeys-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: medusa
+      POSTGRES_USER: medusa
+      POSTGRES_PASSWORD: medusa
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medusa -d medusa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: kingkeys-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: kingkeys-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9100:9000"   # S3 API
+      - "9001:9001"   # Console
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kingkeys-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://medusa:medusa@postgres:5432/medusa
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: local-dev-jwt-secret-change-me
+      COOKIE_SECRET: local-dev-cookie-secret-change-me
+      MEDUSA_ADMIN_EMAIL: admin@kingkeys.com
+      MEDUSA_ADMIN_PASSWORD: Admin123!
+      STORE_CORS: http://localhost:8000,http://localhost:3000
+      ADMIN_CORS: http://localhost:9000,http://localhost:7001
+      AUTH_CORS: http://localhost:8000,http://localhost:9000,http://localhost:7001
+      BACKEND_PUBLIC_URL: http://localhost:9000
+      MEDUSA_WORKER_MODE: shared
+      MEDUSA_DISABLE_ADMIN: "false"
+      # Uncomment to use MinIO for file storage:
+      # MINIO_ENDPOINT: minio:9000
+      # MINIO_ACCESS_KEY: minioadmin
+      # MINIO_SECRET_KEY: minioadmin
+      # MINIO_BUCKET: medusa-media
+    volumes:
+      - backend_static:/app/server/static
+
+  storefront:
+    image: node:20-alpine
+    container_name: kingkeys-storefront
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      - backend
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://backend:9000
+      NEXT_PUBLIC_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_DEFAULT_REGION: us
+      # You must set this AFTER creating a publishable key in admin.
+      # Edit .env.local in storefront or set here:
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:-}
+      PORT: "8000"
+    volumes:
+      - ./king-keys-storefront:/app
+      - storefront_node_modules:/app/node_modules
+      - storefront_next_cache:/app/.next
+    command: sh -c "npm ci && npm run dev"
+
+volumes:
+  postgres_data:
+  minio_data:
+  backend_static:
+  storefront_node_modules:
+  storefront_next_cache:

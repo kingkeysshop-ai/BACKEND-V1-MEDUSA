@@ -1,0 +1,177 @@
+"use client"
+
+import React, { useEffect, useMemo, useActionState } from "react"
+import Input from "@modules/common/components/input"
+import NativeSelect from "@modules/common/components/native-select"
+import AccountInfo from "../account-info"
+import { HttpTypes } from "@medusajs/types"
+import { addCustomerAddress, updateCustomerAddress } from "@lib/data/customer"
+
+type MyInformationProps = {
+  customer: HttpTypes.StoreCustomer
+  regions: HttpTypes.StoreRegion[]
+}
+
+const ProfileBillingAddress: React.FC<MyInformationProps> = ({ customer, regions }) => {
+  const regionOptions = useMemo(() => {
+    return (
+      regions
+        ?.map((region) =>
+          region.countries?.map((country) => ({
+            value: country.iso_2,
+            label: country.display_name,
+          }))
+        )
+        .flat() || []
+    )
+  }, [regions])
+
+  const [successState, setSuccessState] = React.useState(false)
+
+  const billingAddress = customer.addresses?.find((addr) => addr.is_default_billing)
+
+  const initialState: Record<string, any> = {
+    isDefaultBilling: true,
+    isDefaultShipping: false,
+    error: false,
+    success: false,
+  }
+
+  if (billingAddress) initialState.addressId = billingAddress.id
+
+  const [state, formAction] = useActionState(
+    billingAddress ? updateCustomerAddress : addCustomerAddress,
+    initialState
+  )
+
+  const clearState = () => setSuccessState(false)
+
+  useEffect(() => {
+    setSuccessState(state.success)
+  }, [state])
+
+  const currentInfo = useMemo(() => {
+    if (!billingAddress) {
+      return (
+        <span className="text-gray-500 italic text-xs">
+          Sin dirección de facturación registrada
+        </span>
+      )
+    }
+
+    const country =
+      regionOptions?.find((c) => c?.value === billingAddress.country_code)?.label ||
+      billingAddress.country_code?.toUpperCase()
+
+    return (
+      <div className="flex flex-col text-white text-sm font-semibold gap-0.5" data-testid="current-info">
+        <span>{billingAddress.first_name} {billingAddress.last_name}</span>
+        {billingAddress.company && <span className="text-gray-400 text-xs">{billingAddress.company}</span>}
+        <span className="text-gray-300 text-xs">
+          {billingAddress.address_1}
+          {billingAddress.address_2 ? `, ${billingAddress.address_2}` : ""}
+        </span>
+        <span className="text-gray-300 text-xs">{billingAddress.postal_code}, {billingAddress.city}</span>
+        <span className="text-gray-400 text-xs">{country}</span>
+      </div>
+    )
+  }, [billingAddress, regionOptions])
+
+  return (
+    <form action={formAction} onReset={() => clearState()} className="w-full">
+      <input type="hidden" name="addressId" value={billingAddress?.id} />
+      <AccountInfo
+        label="Dirección de Facturación"
+        currentInfo={currentInfo}
+        isSuccess={successState}
+        isError={!!state.error}
+        clearState={clearState}
+        data-testid="account-billing-address-editor"
+      >
+        <div className="grid grid-cols-1 gap-y-3">
+          <div className="grid grid-cols-2 gap-x-3">
+            <Input
+              label="Nombre"
+              name="first_name"
+              defaultValue={billingAddress?.first_name || undefined}
+              required
+              data-testid="billing-first-name-input"
+            />
+            <Input
+              label="Apellido"
+              name="last_name"
+              defaultValue={billingAddress?.last_name || undefined}
+              required
+              data-testid="billing-last-name-input"
+            />
+          </div>
+          <Input
+            label="Empresa (opcional)"
+            name="company"
+            defaultValue={billingAddress?.company || undefined}
+            data-testid="billing-company-input"
+          />
+          <Input
+            label="Teléfono"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            required
+            defaultValue={billingAddress?.phone ?? customer?.phone ?? ""}
+            data-testid="billing-phone-input"
+          />
+          <Input
+            label="Dirección"
+            name="address_1"
+            defaultValue={billingAddress?.address_1 || undefined}
+            required
+            data-testid="billing-address-1-input"
+          />
+          <Input
+            label="Apartamento, suite, etc."
+            name="address_2"
+            defaultValue={billingAddress?.address_2 || undefined}
+            data-testid="billing-address-2-input"
+          />
+          <div className="grid grid-cols-[144px_1fr] gap-x-3">
+            <Input
+              label="Código Postal"
+              name="postal_code"
+              defaultValue={billingAddress?.postal_code || undefined}
+              required
+              data-testid="billing-postcal-code-input"
+            />
+            <Input
+              label="Ciudad"
+              name="city"
+              defaultValue={billingAddress?.city || undefined}
+              required
+              data-testid="billing-city-input"
+            />
+          </div>
+          <Input
+            label="Provincia / Estado"
+            name="province"
+            defaultValue={billingAddress?.province || undefined}
+            data-testid="billing-province-input"
+          />
+          <NativeSelect
+            name="country_code"
+            defaultValue={billingAddress?.country_code || undefined}
+            required
+            data-testid="billing-country-code-select"
+          >
+            <option value="">Selecciona un país</option>
+            {regionOptions.map((option, i) => (
+              <option key={i} value={option?.value}>
+                {option?.label}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+      </AccountInfo>
+    </form>
+  )
+}
+
+export default ProfileBillingAddress

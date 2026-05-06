@@ -1,0 +1,19 @@
+# Nixpacks config for King Keys Storefront (Next.js) on Railway
+# https://nixpacks.com/docs/configuration/file
+
+[phases.setup]
+nixPkgs = ["nodejs_24"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
+
+[variables]
+NODE_VERSION = "24"
+NPM_CONFIG_PRODUCTION = "false"
+NEXT_TELEMETRY_DISABLED = "1"

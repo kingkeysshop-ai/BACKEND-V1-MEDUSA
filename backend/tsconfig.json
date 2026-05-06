@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "target": "es2019",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "module": "node16",
+    "moduleResolution": "node16",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "declaration": true,
+    "sourceMap": false,
+    "outDir": "./.medusa/server",
+    "rootDir": "./",
+    "baseUrl": ".",
+    "types": ["node"],
+    "paths": {
+      "*": ["./src/*"]
+    },
+    "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "checkJs": false
+  },
+  "ts-node": {
+    "swc": true
+  },
+  "include": ["src", "medusa-config.js"],
+  "exclude": [
+    "**/__tests__",
+    "**/__fixtures__",
+    "node_modules",
+    "build",
+    ".cache"
+  ]
+}

@@ -97,14 +97,25 @@ module.exports = defineConfig({
       key: 'license_manager',
       resolve: './src/modules/license-manager',
     },
-    // BTCPay — key agregado, es obligatorio en Medusa 2.x
+    // ✅ BTCPay como Payment Provider (aparece en Regions > Payment Providers)
     {
-  key: 'btcpay_payment',
-  resolve: './src/modules/btcpay-payment',
-  options: {}
-},
+      key: Modules.PAYMENT,
+      resolve: '@medusajs/payment',
+      options: {
+        providers: [
+          {
+            resolve: './src/modules/btcpay-payment',
+            id: 'btcpay',
+            options: {
+              api_url: process.env.BTCPAY_URL,
+              api_key: process.env.BTCPAY_API_KEY,
+              store_id: process.env.BTCPAY_STORE_ID,
+            }
+          }
+        ]
+      }
+    },
     // Redis + Notificaciones (opcionales)
     ...optionalModules,
   ],
-  // Sin plugins: [] — evita warnings innecesarios
 });

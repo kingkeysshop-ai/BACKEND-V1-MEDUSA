@@ -99,10 +99,10 @@ module.exports = defineConfig({
     },
     // BTCPay — key agregado, es obligatorio en Medusa 2.x
     {
-      key: 'btcpay-payment',
-      resolve: './src/modules/btcpay-payment',
-      options: {}
-    },
+  key: 'btcpay_payment',
+  resolve: './src/modules/btcpay-payment',
+  options: {}
+},
     // Redis + Notificaciones (opcionales)
     ...optionalModules,
   ],

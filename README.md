@@ -45,7 +45,65 @@ Then:
 
 ---
 
-## 🔐 First-Time Setup
+## � Despliegue a Railway con BTCPay
+
+### 1. Preparar el repositorio
+
+```bash
+# Hacer ejecutable el script de despliegue
+chmod +x deploy.sh
+
+# Ejecutar despliegue (reemplaza con tu repo URL)
+./deploy.sh https://github.com/TU-USUARIO/TU-REPO.git
+```
+
+### 2. Configurar Railway
+
+1. Ve a [Railway.app](https://railway.app) y conecta tu repositorio Git
+2. Railway detectará automáticamente la configuración monorepo
+3. Configura estas variables de entorno:
+
+#### Variables requeridas:
+```bash
+# Base
+NODE_ENV=production
+PORT=9000
+
+# Base de datos (Railway la crea automáticamente)
+DATABASE_URL=${{ DATABASE_URL }}
+
+# Redis (Railway lo crea automáticamente)
+REDIS_URL=${{ REDIS_URL }}
+
+# BTCPay - CONFIGURA CON TUS VALORES REALES
+BTCPAY_URL=https://tu-servidor-btcpay.com
+BTCPAY_API_KEY=tu_api_key_de_btcpay
+BTCPAY_STORE_ID=tu_store_id_de_btcpay
+
+# URLs
+BACKEND_PUBLIC_URL=${{ RAILWAY_STATIC_URL }}
+STORE_URL=https://tu-dominio-storefront.railway.app
+
+# Admin
+MEDUSA_ADMIN_EMAIL=tu-email@ejemplo.com
+MEDUSA_ADMIN_PASSWORD=tu_password_seguro_123!
+```
+
+### 3. Configurar Webhook en BTCPay
+
+En tu servidor BTCPay, configura el webhook:
+- **URL**: `${{ RAILWAY_STATIC_URL }}/api/btcpay/webhook`
+- **Eventos**: `InvoiceSettled`, `InvoiceExpired`, `InvoiceInvalid`
+
+### 4. URLs después del despliegue
+
+- **Admin Dashboard**: `${{ RAILWAY_STATIC_URL }}/app`
+- **Store API**: `${{ RAILWAY_STATIC_URL }}/store`
+- **Storefront**: `https://tu-dominio-storefront.railway.app`
+
+---
+
+## �🔐 First-Time Setup
 
 ### 1. Edit secrets
 Open `backend/.env` and change:

@@ -1,22 +1,10 @@
 import { AbstractPaymentProvider } from "@medusajs/framework/utils"
 import type {
-  PaymentProviderError,
-  PaymentProviderSessionResponse,
   PaymentSessionStatus,
-  ProviderWebhookPayload,
   WebhookActionResult,
-  AuthorizePaymentInput,
-  CapturePaymentInput,
-  CancelPaymentInput,
-  InitiatePaymentInput,
-  DeletePaymentInput,
-  GetPaymentStatusInput,
-  RefundPaymentInput,
-  RetrievePaymentInput,
-  UpdatePaymentInput,
 } from "@medusajs/framework/types"
 
-class BTCPayProviderService extends AbstractPaymentProvider {
+class BTCPayProviderService extends AbstractPaymentProvider<Record<string, unknown>> {
   static identifier = "btcpay"
 
   private apiUrl: string
@@ -30,10 +18,10 @@ class BTCPayProviderService extends AbstractPaymentProvider {
     this.storeId = options.store_id || process.env.BTCPAY_STORE_ID || ""
   }
 
-  async initiatePayment(input: InitiatePaymentInput): Promise<PaymentProviderSessionResponse | PaymentProviderError> {
+  async initiatePayment(input: any): Promise<any> {
     try {
       const { amount, currency_code, context } = input
-      const orderId = context?.resource_id || `order-${Date.now()}`
+      const orderId = context?.cart_id || context?.id || `order-${Date.now()}`
 
       const res = await fetch(`${this.apiUrl}/api/v1/stores/${this.storeId}/invoices`, {
         method: "POST",
@@ -42,7 +30,7 @@ class BTCPayProviderService extends AbstractPaymentProvider {
           "Authorization": `token ${this.apiKey}`,
         },
         body: JSON.stringify({
-          amount: (amount / 100).toString(),
+          amount: (Number(amount) / 100).toString(),
           currency: currency_code?.toUpperCase() || "USD",
           metadata: { orderId },
           checkout: {
@@ -62,12 +50,12 @@ class BTCPayProviderService extends AbstractPaymentProvider {
           status: "pending",
         },
       }
-    } catch (e) {
+    } catch (e: any) {
       return { error: e.message, code: "btcpay_error", detail: e }
     }
   }
 
-  async authorizePayment(input: AuthorizePaymentInput): Promise<{ status: PaymentSessionStatus; data: Record<string, unknown> } | PaymentProviderError> {
+  async authorizePayment(input: any): Promise<any> {
     const invoiceId = input.data?.invoiceId as string
     if (!invoiceId) return { status: "pending", data: input.data }
 
@@ -82,28 +70,28 @@ class BTCPayProviderService extends AbstractPaymentProvider {
       if (["Expired", "Invalid"].includes(invoice.status)) status = "error"
 
       return { status, data: { ...input.data, btcpayStatus: invoice.status } }
-    } catch (e) {
+    } catch (e: any) {
       return { error: e.message, code: "btcpay_error", detail: e }
     }
   }
 
-  async capturePayment(input: CapturePaymentInput): Promise<{ data: Record<string, unknown> } | PaymentProviderError> {
+  async capturePayment(input: any): Promise<any> {
     return { data: input.data }
   }
 
-  async cancelPayment(input: CancelPaymentInput): Promise<{ data: Record<string, unknown> } | PaymentProviderError> {
+  async cancelPayment(input: any): Promise<any> {
     return { data: input.data }
   }
 
-  async refundPayment(input: RefundPaymentInput): Promise<{ data: Record<string, unknown> } | PaymentProviderError> {
+  async refundPayment(input: any): Promise<any> {
     return { data: input.data }
   }
 
-  async deletePayment(input: DeletePaymentInput): Promise<{ data: Record<string, unknown> } | PaymentProviderError> {
+  async deletePayment(input: any): Promise<any> {
     return { data: input.data }
   }
 
-  async getPaymentStatus(input: GetPaymentStatusInput): Promise<{ status: PaymentSessionStatus } | PaymentProviderError> {
+  async getPaymentStatus(input: any): Promise<{ status: PaymentSessionStatus }> {
     const invoiceId = input.data?.invoiceId as string
     if (!invoiceId) return { status: "pending" }
 
@@ -118,20 +106,20 @@ class BTCPayProviderService extends AbstractPaymentProvider {
       if (["Expired", "Invalid"].includes(invoice.status)) status = "error"
 
       return { status }
-    } catch (e) {
-      return { error: e.message, code: "btcpay_error", detail: e }
+    } catch {
+      return { status: "error" }
     }
   }
 
-  async retrievePayment(input: RetrievePaymentInput): Promise<Record<string, unknown> | PaymentProviderError> {
+  async retrievePayment(input: any): Promise<any> {
     return input.data
   }
 
-  async updatePayment(input: UpdatePaymentInput): Promise<PaymentProviderSessionResponse | PaymentProviderError> {
-    return { id: input.data?.invoiceId as string, data: input.data }
+  async updatePayment(input: any): Promise<any> {
+    return { id: input.data?.invoiceId, data: input.data }
   }
 
-  async getWebhookActionAndData(payload: ProviderWebhookPayload): Promise<WebhookActionResult> {
+  async getWebhookActionAndData(data: { data: Record<string, unknown>; rawData: string | Buffer; headers: Record<string, unknown> }): Promise<WebhookActionResult> {
     return { action: "not_supported" }
   }
 }

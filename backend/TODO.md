@@ -1,32 +1,19 @@
-# License Manager Implementation TODO
+# Railway Deployment Fix TODO
 
-## ✅ Plan Approved & Understood (Medusa v2 specifics)
+## ✅ Plan Approved & Understood (Medusa + Railway)
 
-## 📁 1. Create Module Files [0/3]
-- [ ] `backend/src/modules/license-manager/models/license-key.ts` (MikroORM model)
-- [ ] `backend/src/modules/license-manager/service.ts` (MedusaService + custom methods)
-- [ ] `backend/src/modules/license-manager/index.ts` (module export)
+## 🛠️ 1. Move DB migration out of build [1/1]
+- [x] Edit `backend/package.json` `build` script to remove `medusa db:migrate`
 
-## 📧 2. Email Template [1/2]
-- [ ] `backend/src/modules/email-notifications/templates/license-delivery.tsx`
-- [ ] Edit `backend/src/modules/email-notifications/templates/index.tsx` (add LICENSE_DELIVERY)
+## 🚀 2. Run migration at runtime start [1/1]
+- [x] Edit `backend/package.json` `start` script to run `medusa db:migrate` before server start
 
-## ⚙️ 3. Module Registration [0/1]
-- [ ] Edit `backend/medusa-config.js` (add license-manager module)
+## ⚙️ 3. Railway command alignment [1/1]
+- [x] Keep `backend/railway.toml` `startCommand = "pnpm run start"` (already correct)
 
-## 🔄 4. Workflow [0/1]
-- [ ] `backend/src/workflows/assign-licenses-on-order.ts` (createWorkflow + steps)
+## ✅ 4. Verification Steps [0/2]
+- [ ] Redeploy on Railway and confirm no DB retry loop during build
+- [ ] Confirm `/health` turns healthy after runtime start
 
-## 🔔 5. Subscriber [0/1]
-- [ ] `backend/src/subscribers/order-placed-licenses.ts` (NEW file, order.placed event)
-
-## ✅ 6. Verification [0/2]
-- [ ] `cd backend && pnpm tsc --noEmit`
-- [ ] Generate migration: `cd backend && pnpm medusa db:generate license-manager`
-
-## 📄 Final Deliverables
-- [ ] List of files created/modified
-- [ ] CSV import example
-- [ ] Commit message
-
-**Next Step:** Create `models/license-key.ts`
+## 📄 Result
+- [ ] Deployment no longer blocks in build phase waiting for DB connectivity

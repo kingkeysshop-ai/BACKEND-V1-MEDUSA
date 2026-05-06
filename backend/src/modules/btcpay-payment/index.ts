@@ -1,9 +1,10 @@
-import { Module } from "@medusajs/framework";
-import { BTCPayProviderService } from "./services/btcpay-provider.service";
+import BTCPayProviderService from "./services/btcpay-provider.service";
 
-export const BTCPayPaymentModule = Module({
-  moduleId: "btcpay-payment",
-  service: BTCPayProviderService,
-});
+export default {
+  resolve: "./services/btcpay-provider.service", // Ojo: a veces Medusa 2.0 requiere esto
+  // O si es un módulo de Medusa 2.0 estándar:
+  // main: "./services/btcpay-provider.service"
+};
 
-export default BTCPayPaymentModule;
+// O si es una configuración de módulo:
+// export default class BTCPayPaymentModule { ... }

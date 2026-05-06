@@ -45,14 +45,25 @@ const notificationProviders = [
   }] : []),
 ];
 
-// --- 3. MÓDULOS OPCIONALES (NOTIFICACIONES) ---
-// Nota: El módulo de pagos (BTCPay) se carga directamente, no necesita un provider wrapper aquí
+// --- 3. MÓDULOS OPCIONALES ---
 const optionalModules = [
   ...(notificationProviders.length > 0 ? [{
     key: Modules.NOTIFICATION,
     resolve: '@medusajs/notification',
     options: { providers: notificationProviders }
   }] : []),
+  ...(process.env.REDIS_URL ? [
+    {
+      key: Modules.EVENT_BUS,
+      resolve: '@medusajs/event-bus-redis',
+      options: { redisUrl: process.env.REDIS_URL }
+    },
+    {
+      key: Modules.WORKFLOW_ENGINE,
+      resolve: '@medusajs/workflow-engine-redis',
+      options: { redis: { url: process.env.REDIS_URL } }
+    }
+  ] : []),
 ];
 
 // --- 4. CONFIGURACIÓN PRINCIPAL ---
@@ -75,43 +86,25 @@ module.exports = defineConfig({
     disable: process.env.SHOULD_DISABLE_ADMIN === 'true',
   },
   modules: [
+    // Archivos
     {
       key: Modules.FILE,
       resolve: '@medusajs/file',
       options: { providers: fileProviders }
     },
-    // ✅ MÓDULO DE LICENCIAS (Corregido)
+    // Licencias
     {
       key: 'license_manager',
       resolve: './src/modules/license-manager',
     },
-    // ✅ MÓDULO BTCPAY (NUEVO - Pagos en Cripto)
+    // BTCPay — key agregado, es obligatorio en Medusa 2.x
     {
+      key: 'btcpay-payment',
       resolve: './src/modules/btcpay-payment',
-      id: 'btcpay-payment',
       options: {}
     },
-    // --- Redis & Workflow Engine (Opcional) ---
-    ...(process.env.REDIS_URL ? [
-      {
-        key: Modules.EVENT_BUS,
-        resolve: '@medusajs/event-bus-redis',
-        options: {
-          redisUrl: process.env.REDIS_URL,
-        }
-      },
-      {
-        key: Modules.WORKFLOW_ENGINE,
-        resolve: '@medusajs/workflow-engine-redis',
-        options: {
-          redis: {
-            url: process.env.REDIS_URL,
-          }
-        }
-      }
-    ] : []),
-    // --- Notificaciones (Si están configuradas) ---
+    // Redis + Notificaciones (opcionales)
     ...optionalModules,
   ],
-  plugins: [] // Dejar vacío, los módulos se cargan arriba
+  // Sin plugins: [] — evita warnings innecesarios
 });

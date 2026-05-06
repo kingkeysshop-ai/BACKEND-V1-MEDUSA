@@ -1,5 +1,5 @@
 import { AbstractPaymentProvider } from "@medusajs/framework/utils"
-import {
+import type {
   PaymentProviderError,
   PaymentProviderSessionResponse,
   PaymentSessionStatus,
@@ -14,7 +14,7 @@ import {
   RefundPaymentInput,
   RetrievePaymentInput,
   UpdatePaymentInput,
-} from "@medusajs/types"
+} from "@medusajs/framework/types"
 
 class BTCPayProviderService extends AbstractPaymentProvider {
   static identifier = "btcpay"

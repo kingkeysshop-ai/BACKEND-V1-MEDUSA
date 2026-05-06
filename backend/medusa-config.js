@@ -2,7 +2,7 @@ const { loadEnv, Modules, defineConfig } = require('@medusajs/framework/utils');
 
 loadEnv(process.env.NODE_ENV, process.cwd());
 
-// Construir providers condicionalmente para evitar arrays vacíos
+// --- 1. CONFIGURACIÓN DE ARCHIVOS ---
 const fileProviders = process.env.MINIO_ENDPOINT && process.env.MINIO_ACCESS_KEY && process.env.MINIO_SECRET_KEY
   ? [{
       resolve: './src/modules/minio-file',
@@ -23,6 +23,7 @@ const fileProviders = process.env.MINIO_ENDPOINT && process.env.MINIO_ACCESS_KEY
       }
     }];
 
+// --- 2. CONFIGURACIÓN DE NOTIFICACIONES ---
 const notificationProviders = [
   ...(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL ? [{
     resolve: './src/modules/email-notifications',
@@ -44,52 +45,17 @@ const notificationProviders = [
   }] : []),
 ];
 
-const paymentProviders = [
-  ...(process.env.STRIPE_API_KEY && process.env.STRIPE_WEBHOOK_SECRET ? [{
-    resolve: '@medusajs/payment-stripe',
-    id: 'stripe',
-    options: {
-      apiKey: process.env.STRIPE_API_KEY,
-      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    }
-  }] : []),
-  ...(process.env.AURPAY_API_TOKEN && process.env.AURPAY_API_SECRET ? [{
-    resolve: './src/modules/aurpay',
-    id: 'aurpay',
-    options: {
-      apiToken: process.env.AURPAY_API_TOKEN,
-      apiSecret: process.env.AURPAY_API_SECRET,
-      callbackToken: process.env.AURPAY_CALLBACK_TOKEN || '',
-      callbackSecret: process.env.AURPAY_CALLBACK_SECRET || '',
-    }
-  }] : []),
-  ...(process.env.AUTHORIZE_NET_LOGIN_ID && process.env.AUTHORIZE_NET_TRANSACTION_KEY ? [{
-    resolve: './src/modules/authorize-net',
-    id: 'authorizenet',
-    options: {
-      login_id: process.env.AUTHORIZE_NET_LOGIN_ID,
-      transaction_key: process.env.AUTHORIZE_NET_TRANSACTION_KEY,
-      public_client_key: process.env.AUTHORIZE_NET_PUBLIC_CLIENT_KEY || '',
-      environment: process.env.AUTHORIZE_NET_ENVIRONMENT || 'sandbox',
-      webhook_secret: process.env.AUTHORIZE_NET_WEBHOOK_SECRET || '',
-    }
-  }] : []),
-];
-
-// Módulos opcionales (solo se incluyen si están configurados)
+// --- 3. MÓDULOS OPCIONALES (NOTIFICACIONES) ---
+// Nota: El módulo de pagos (BTCPay) se carga directamente, no necesita un provider wrapper aquí
 const optionalModules = [
   ...(notificationProviders.length > 0 ? [{
     key: Modules.NOTIFICATION,
     resolve: '@medusajs/notification',
     options: { providers: notificationProviders }
   }] : []),
-  ...(paymentProviders.length > 0 ? [{
-    key: Modules.PAYMENT,
-    resolve: '@medusajs/payment',
-    options: { providers: paymentProviders }
-  }] : []),
 ];
 
+// --- 4. CONFIGURACIÓN PRINCIPAL ---
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -114,11 +80,18 @@ module.exports = defineConfig({
       resolve: '@medusajs/file',
       options: { providers: fileProviders }
     },
-    // FIX: guión → guión bajo (Medusa solo permite alfanumérico y _)
+    // ✅ MÓDULO DE LICENCIAS (Corregido)
     {
       key: 'license_manager',
       resolve: './src/modules/license-manager',
     },
+    // ✅ MÓDULO BTCPAY (NUEVO - Pagos en Cripto)
+    {
+      resolve: './src/modules/btcpay-payment',
+      id: 'btcpay-payment',
+      options: {}
+    },
+    // --- Redis & Workflow Engine (Opcional) ---
     ...(process.env.REDIS_URL ? [
       {
         key: Modules.EVENT_BUS,
@@ -137,7 +110,8 @@ module.exports = defineConfig({
         }
       }
     ] : []),
+    // --- Notificaciones (Si están configuradas) ---
     ...optionalModules,
   ],
-  plugins: []
+  plugins: [] // Dejar vacío, los módulos se cargan arriba
 });

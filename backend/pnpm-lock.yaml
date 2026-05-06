@@ -54,6 +54,9 @@ importers:
       '@rokmohar/medusa-plugin-meilisearch':
         specifier: 1.3.5
         version: 1.3.5(sgorwdexdumerqq22zucfgtice)
+      '@webbers/pay-payments-medusa':
+        specifier: ^2.2.43
+        version: 2.2.43(zgnhnmpsdjatkddmo36l2irf6e)
       axios:
         specifier: ^1.16.0
         version: 1.16.0
@@ -3957,6 +3960,21 @@ packages:
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
+
+  '@webbers/pay-payments-medusa@2.2.43':
+    resolution: {integrity: sha512-2W4b3htuyGhWZydgLTYxtirQI7V9sHgYgMRuPkSidrlNtM1BcBYEqQLSKSTmKzeQpCDQ9njXkkguBXj6vmrqkg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@medusajs/admin-sdk': ^2.11.1
+      '@medusajs/cli': ^2.11.1
+      '@medusajs/core-flows': ^2.11.1
+      '@medusajs/framework': ^2.11.1
+      '@medusajs/icons': ^2.11.1
+      '@medusajs/js-sdk': ^2.11.1
+      '@medusajs/medusa': ^2.11.1
+      '@medusajs/test-utils': ^2.11.1
+      '@medusajs/ui': ^4.0.3
+      '@tanstack/react-query': 5.64.2
 
   '@whatwg-node/promise-helpers@1.3.2':
     resolution: {integrity: sha512-Nst5JdK47VIl9UcGwtv2Rcgyn5lWtZ0/mhRQ4G8NN2isxpq2TO30iqHzmwoJycjWuyUfg3GFXqP/gFHXeV57IA==}
@@ -12092,6 +12110,20 @@ snapshots:
       vite: 5.4.21(@types/node@24.12.2)
     transitivePeerDependencies:
       - supports-color
+
+  '@webbers/pay-payments-medusa@2.2.43(zgnhnmpsdjatkddmo36l2irf6e)':
+    dependencies:
+      '@medusajs/admin-sdk': 2.13.6
+      '@medusajs/admin-shared': 2.13.6
+      '@medusajs/cli': 2.13.6(@types/node@24.12.2)
+      '@medusajs/core-flows': 2.13.6(@medusajs/framework@2.13.6(@medusajs/cli@2.13.6(@types/node@24.12.2))(@types/node@24.12.2)(ioredis@5.10.1)(vite@5.4.21(@types/node@24.12.2))(zod@3.25.76))
+      '@medusajs/framework': 2.13.6(@medusajs/cli@2.13.6(@types/node@24.12.2))(@types/node@24.12.2)(ioredis@5.10.1)(vite@5.4.21(@types/node@24.12.2))(zod@3.25.76)
+      '@medusajs/icons': 2.14.2(react@18.3.1)
+      '@medusajs/js-sdk': 2.13.6
+      '@medusajs/medusa': 2.13.6(@medusajs/admin-sdk@2.13.6)(@medusajs/cli@2.13.6(@types/node@24.12.2))(@medusajs/framework@2.13.6(@medusajs/cli@2.13.6(@types/node@24.12.2))(@types/node@24.12.2)(ioredis@5.10.1)(vite@5.4.21(@types/node@24.12.2))(zod@3.25.76))(@medusajs/icons@2.14.2(react@18.3.1))(@medusajs/test-utils@2.13.6)(@medusajs/ui@4.1.9(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(@swc/core@1.5.7(@swc/helpers@0.5.21))(@types/node@24.12.2)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(awilix@8.0.1)(picomatch@4.0.4)(posthog-node@5.33.0(rxjs@7.8.2))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      '@medusajs/test-utils': 2.13.6(@medusajs/core-flows@2.13.6(@medusajs/framework@2.13.6(@medusajs/cli@2.13.6(@types/node@24.12.2))(@types/node@24.12.2)(ioredis@5.10.1)(vite@5.4.21(@types/node@24.12.2))(zod@3.25.76)))(@medusajs/framework@2.13.6(@medusajs/cli@2.13.6(@types/node@24.12.2))(@types/node@24.12.2)(ioredis@5.10.1)(vite@5.4.21(@types/node@24.12.2))(zod@3.25.76))(@medusajs/medusa@2.13.6)
+      '@medusajs/ui': 4.1.9(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      '@tanstack/react-query': 5.64.2(react@18.3.1)
 
   '@whatwg-node/promise-helpers@1.3.2':
     dependencies:

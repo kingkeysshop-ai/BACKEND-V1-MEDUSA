@@ -3,7 +3,7 @@
   "version": "1.0.3",
   "private": true,
   "author": "Kasper Fabricius Kristensen <kasper@medusajs.com> & Victor Gerbrands <victor@medusajs.com> (https://www.medusajs.com)",
-  "description": "Next.js Starter to be used with Medusa V2",
+  "description": "Next.js Starter to be used with Medusa V1",
   "keywords": [
     "medusa-storefront"
   ],
@@ -20,7 +20,7 @@
     "@emotion/styled": "^11.14.1",
     "@headlessui/react": "^2.2.0",
     "@medusajs/icons": "latest",
-    "@medusajs/js-sdk": "latest",
+    "@medusajs/medusa-js": "6.1.10",
     "@medusajs/ui": "latest",
     "@radix-ui/react-accordion": "^1.2.1",
     "@stripe/react-stripe-js": "^5.3.0",

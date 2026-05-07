@@ -1,4 +1,4 @@
-# Nixpacks config for Medusa 2.0 Backend on Railway
+# Nixpacks config for Medusa 1.20.11 Backend on Railway
 # https://nixpacks.com/docs/configuration/file
 
 [phases.setup]

@@ -1,8 +1,8 @@
 
-Production-ready Medusa 2.0 backend prepared for:
+Production-ready Medusa 1.20.11 backend prepared for:
 - ✅ **Local development** via Docker Compose (Postgres + Redis + MinIO)
 - ✅ **Railway deployment** via Nixpacks/Docker
-- ✅ Stripe, Resend/SendGrid, Meilisearch, MinIO S3 integrations
+- ✅ Stripe, SendGrid, MinIO S3 integrations
 
 ---
 

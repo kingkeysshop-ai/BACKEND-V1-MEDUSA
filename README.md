@@ -1,18 +1,18 @@
-# 👑 King Keys - Medusa 2.0 Monorepo
+# 👑 King Keys - Medusa 1.0 Monorepo
 
 Full-stack e-commerce platform:
-- **Backend**: Medusa 2.13 (Node 22 + PostgreSQL + Redis)
+- **Backend**: Medusa 1.20 (Node 24 + PostgreSQL + Redis)
 - **Storefront**: Next.js 15 + React 19 + Tailwind
 - **Deployment**: Railway (both services)
 - **Local dev**: Docker Compose (one command)
 
 ```
 c:/KING KEYS S/
-├── backend/                   ← Medusa 2.0 API + Admin
-├── king-keys-storefront/      ← Next.js customer-facing site
+├── backend/                   ← Medusa 1.0 API + Admin
+├── storefront/                ← Next.js customer-facing site
 ├── docker-compose.yml         ← one-command local dev stack
-├── start-all.sh               ← Linux/Mac/WSL launcher
-├── start-all.bat              ← Windows launcher
+├── railway.json               ← Railway deployment config
+├── railway.toml               ← Nixpacks config
 └── README.md                  ← you are here
 ```
 
@@ -22,172 +22,111 @@ c:/KING KEYS S/
 
 **Windows (PowerShell / CMD):**
 ```bat
-cd "c:\KING KEYS S"
-start-all.bat
+cd backend
+docker compose up -d
 ```
 
 **Linux / macOS / WSL:**
 ```bash
-cd "/mnt/c/KING KEYS S"   # or your path
-chmod +x start-all.sh
-./start-all.sh
+cd backend
+docker compose up -d
 ```
 
 This will:
-1. Copy `backend/.env.example` → `backend/.env` (if missing)
-2. Copy `king-keys-storefront/.env.local.example` → `king-keys-storefront/.env.local` (if missing)
-3. Launch Postgres, Redis, MinIO, Backend, Storefront in Docker
-4. Wait for backend `/health`
+1. Start PostgreSQL, Redis, MinIO
+2. Run database migrations
+3. Launch Medusa 1.20 backend
+4. Available at http://localhost:9000
 
-Then:
-- Admin: http://localhost:9000/app
-- Store: http://localhost:8000
-
----
-
-## � Despliegue a Railway con BTCPay
-
-### 1. Preparar el repositorio
-
-```bash
-# Hacer ejecutable el script de despliegue
-chmod +x deploy.sh
-
-# Ejecutar despliegue (reemplaza con tu repo URL)
-./deploy.sh https://github.com/TU-USUARIO/TU-REPO.git
-```
-
-### 2. Configurar Railway
-
-1. Ve a [Railway.app](https://railway.app) y conecta tu repositorio Git
-2. Railway detectará automáticamente la configuración monorepo
-3. Configura estas variables de entorno:
-
-#### Variables requeridas:
-```bash
-# Base
-NODE_ENV=production
-PORT=9000
-
-# Base de datos (Railway la crea automáticamente)
-DATABASE_URL=${{ DATABASE_URL }}
-
-# Redis (Railway lo crea automáticamente)
-REDIS_URL=${{ REDIS_URL }}
-
-# BTCPay - CONFIGURA CON TUS VALORES REALES
-BTCPAY_URL=https://tu-servidor-btcpay.com
-BTCPAY_API_KEY=tu_api_key_de_btcpay
-BTCPAY_STORE_ID=tu_store_id_de_btcpay
-
-# URLs
-BACKEND_PUBLIC_URL=${{ RAILWAY_STATIC_URL }}
-STORE_URL=https://tu-dominio-storefront.railway.app
-
-# Admin
-MEDUSA_ADMIN_EMAIL=tu-email@ejemplo.com
-MEDUSA_ADMIN_PASSWORD=tu_password_seguro_123!
-```
-
-### 3. Configurar Webhook en BTCPay
-
-En tu servidor BTCPay, configura el webhook:
-- **URL**: `${{ RAILWAY_STATIC_URL }}/api/btcpay/webhook`
-- **Eventos**: `InvoiceSettled`, `InvoiceExpired`, `InvoiceInvalid`
-
-### 4. URLs después del despliegue
-
-- **Admin Dashboard**: `${{ RAILWAY_STATIC_URL }}/app`
-- **Store API**: `${{ RAILWAY_STATIC_URL }}/store`
-- **Storefront**: `https://tu-dominio-storefront.railway.app`
+Access:
+- **Admin**: http://localhost:9000/app
+- **Store API**: http://localhost:9000/store
+- **Health**: http://localhost:9000/health
 
 ---
 
-## �🔐 First-Time Setup
+## 🚀 Quick Start — Local Development
 
-### 1. Edit secrets
-Open `backend/.env` and change:
-```
-JWT_SECRET=<generate-long-random-string>
-COOKIE_SECRET=<generate-another-random-string>
-MEDUSA_ADMIN_EMAIL=you@yourdomain.com
-MEDUSA_ADMIN_PASSWORD=<strong-password>
-```
+### 1. Prerequisites
+- Docker & Docker Compose
+- Node.js 24.x
+- pnpm 9.x
 
-> Generate secrets: `openssl rand -base64 48`
-
-### 2. Start the stack
+### 2. Setup Backend
 ```bash
-./start-all.sh      # or start-all.bat on Windows
+cd backend
+cp .env.example .env
+# Edit .env with your settings:
+# - JWT_SECRET (generate: openssl rand -base64 48)
+# - COOKIE_SECRET (generate: openssl rand -base64 48)
+# - MEDUSA_ADMIN_EMAIL
+# - MEDUSA_ADMIN_PASSWORD
 ```
 
-### 3. Create publishable API key
-1. Go to http://localhost:9000/app
-2. Login with `MEDUSA_ADMIN_EMAIL` / `MEDUSA_ADMIN_PASSWORD`
-3. **Settings → Publishable API Keys → Create**
-4. Copy the key (starts with `pk_`)
-5. Paste into `king-keys-storefront/.env.local`:
-   ```
-   NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_xxxxx
-   ```
-6. Restart storefront:
-   ```bash
-   docker compose restart storefront
-   ```
-
-### 4. (Optional) Seed demo data
+### 3. Start Stack
 ```bash
-docker compose exec backend pnpm run seed
+docker compose up -d
+docker compose logs -f medusa
 ```
+
+### 4. Create Admin User
+```bash
+docker compose exec medusa pnpm medusa user -e admin@kingkeys.com -p password
+```
+
+### 5. Access Admin
+Open http://localhost:9000/app and login
 
 ---
 
 ## ☁️ Deploy to Railway
 
-Deploy **two separate services** in **one Railway project**.
-
-### Step 1 — Create Railway project
-1. https://railway.app/new → **Empty project**
-2. Add Plugin: **PostgreSQL**
-3. Add Plugin: **Redis**
+### Step 1 — Create Railway Project
+1. Go to https://railway.app/new → **Empty project**
+2. Add **PostgreSQL** plugin
+3. Add **Redis** plugin
 
 ### Step 2 — Deploy Backend
-1. **+ New → GitHub Repo** → pick the repo for `backend/`
-2. Set **Root Directory** = `/` if the backend repo is standalone, or `/backend` if monorepo.
-3. Railway auto-detects `railway.toml` + `nixpacks.toml`.
-4. **Variables** (add these - see `backend/.env.example`):
-   - `NODE_ENV=production`
-   - `JWT_SECRET=<long-random>`
-   - `COOKIE_SECRET=<long-random>`
-   - `MEDUSA_ADMIN_EMAIL=you@domain.com`
-   - `MEDUSA_ADMIN_PASSWORD=<strong>`
-   - `STORE_CORS=https://<storefront>.up.railway.app`
-   - `ADMIN_CORS=https://<backend>.up.railway.app`
-   - `AUTH_CORS=https://<storefront>.up.railway.app,https://<backend>.up.railway.app`
-   - `MEDUSA_WORKER_MODE=shared`
-   - `MEDUSA_DISABLE_ADMIN=false`
-5. `DATABASE_URL` + `REDIS_URL` auto-injected from plugins.
-6. **Settings → Networking → Generate Domain**.
-7. Deploy. Wait for "Healthy".
+1. **+ New → GitHub Repo** → select `BACKEND-V1-MEDUSA`
+2. Set **Root Directory** = `/backend`
+3. Railway auto-detects `railway.json` + `railway.toml`
+4. Add these environment variables:
+   ```
+   NODE_ENV=production
+   JWT_SECRET=<long-random-string>
+   COOKIE_SECRET=<long-random-string>
+   MEDUSA_ADMIN_EMAIL=admin@kingkeys.com
+   MEDUSA_ADMIN_PASSWORD=<strong-password>
+   STORE_CORS=https://<your-storefront>.up.railway.app
+   ADMIN_CORS=https://<your-backend>.up.railway.app
+   AUTH_CORS=https://<your-storefront>.up.railway.app,https://<your-backend>.up.railway.app
+   MEDUSA_WORKER_MODE=shared
+   MEDUSA_DISABLE_ADMIN=false
+   ```
+5. **Settings → Networking → Generate Domain**
+6. Deploy and wait for "Healthy" ✅
 
-### Step 3 — Create publishable key
-Open `https://<backend>.up.railway.app/app`, login, create a publishable API key.
+### Step 3 — Create Publishable Key
+1. Open `https://<your-backend>.up.railway.app/app`
+2. Login with admin credentials
+3. Go to **Settings → Publishable API Keys → Create**
+4. Copy the key (starts with `pk_`)
 
-### Step 4 — Deploy Storefront
-1. **+ New → GitHub Repo** → pick `king-keys-storefront`
-2. Root Directory = `/`
-3. Railway auto-detects `railway.toml` + `nixpacks.toml`.
-4. **Variables**:
-   - `NEXT_PUBLIC_MEDUSA_BACKEND_URL=https://<backend>.up.railway.app`
-   - `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_xxx` (from step 3)
-   - `NEXT_PUBLIC_DEFAULT_REGION=us`
-   - `NEXT_PUBLIC_BASE_URL=https://<storefront>.up.railway.app`
-   - `NEXT_PUBLIC_STRIPE_KEY=pk_live_xxx` (optional)
-5. **Settings → Networking → Generate Domain** (e.g. `king-keys-storefront.up.railway.app`).
-6. Deploy.
+### Step 4 — Deploy Storefront (Optional)
+1. **+ New → GitHub Repo** → select `BACKEND-V1-MEDUSA`
+2. Set **Root Directory** = `/storefront`
+3. Add environment variables:
+   ```
+   NEXT_PUBLIC_MEDUSA_BACKEND_URL=https://<your-backend>.up.railway.app
+   NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_xxx
+   NEXT_PUBLIC_DEFAULT_REGION=us
+   NEXT_PUBLIC_BASE_URL=https://<your-storefront>.up.railway.app
+   NEXT_PUBLIC_STRIPE_KEY=pk_live_xxx (optional)
+   ```
+4. Deploy
 
 ### Step 5 — Update CORS
-Go back to backend service variables and set `STORE_CORS`, `AUTH_CORS` to include the storefront's final URL, then redeploy backend.
+Update backend service CORS variables with the final storefront URL, then redeploy backend.
 
 ---
 
@@ -196,7 +135,7 @@ Go back to backend service variables and set `STORE_CORS`, `AUTH_CORS` to includ
 ```
 ┌──────────────┐      ┌──────────────┐
 │ Storefront   │─────▶│   Backend    │
-│ Next.js 15   │      │  Medusa 2.0  │
+│ Next.js 15   │      │  Medusa 1.0  │
 │ :8000        │      │  :9000       │
 └──────────────┘      └──────┬───────┘
                              │
@@ -204,42 +143,32 @@ Go back to backend service variables and set `STORE_CORS`, `AUTH_CORS` to includ
             │                │                │
        ┌────▼─────┐    ┌─────▼────┐     ┌─────▼────┐
        │ Postgres │    │  Redis   │     │  MinIO   │
-       │  :5432   │    │  :6379   │     │  :9100   │
+       │  :5432   │    │  :6379   │     │  :9001   │
        └──────────┘    └──────────┘     └──────────┘
 ```
 
 ---
 
-## 🛠️ Commands Cheat Sheet
+## 🛠️ Useful Commands
 
 ```bash
-# Start everything
-docker compose up -d
+# Tail backend logs
+docker compose logs -f medusa
 
-# Tail logs
-docker compose logs -f backend
-docker compose logs -f storefront
+# Exec into backend
+docker compose exec backend sh
 
-# Restart a service
-docker compose restart storefront
-
-# Rebuild after code changes in backend Dockerfile
-docker compose up --build backend
+# Run seed data
+docker compose exec backend pnpm run seed
 
 # Stop everything
 docker compose down
 
-# Nuclear: wipe DB too
+# Wipe database
 docker compose down -v
 
-# Exec into backend container
-docker compose exec backend sh
-
-# Run seed
-docker compose exec backend pnpm run seed
-
-# Create admin user manually
-docker compose exec backend pnpm medusa user -e admin@kk.com -p password
+# Restart backend
+docker compose restart medusa
 ```
 
 ---
@@ -248,25 +177,24 @@ docker compose exec backend pnpm medusa user -e admin@kk.com -p password
 
 | Issue | Fix |
 |-------|-----|
-| Storefront shows "Cannot connect to backend" | Verify `NEXT_PUBLIC_MEDUSA_BACKEND_URL` + restart storefront |
-| `CORS` error in browser console | Add storefront URL to `STORE_CORS` + `AUTH_CORS` in backend env, redeploy |
-| Admin login fails | Check `MEDUSA_ADMIN_EMAIL/PASSWORD` in backend env, or recreate: `pnpm medusa user -e … -p …` |
-| Railway backend stuck at "Deploying" | Check logs — usually missing `JWT_SECRET` or `COOKIE_SECRET` |
-| Build OOM on Railway | Upgrade to a plan with more memory, or disable admin (`MEDUSA_DISABLE_ADMIN=true`) for worker instances |
-| Local storefront blank | `docker compose logs storefront` — probably missing `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` |
+| Admin login fails | Check `MEDUSA_ADMIN_EMAIL/PASSWORD` in .env |
+| `JWT_SECRET` error | Generate with: `openssl rand -base64 48` |
+| CORS errors | Add storefront URL to `STORE_CORS` + `AUTH_CORS` |
+| Build fails on Railway | Check logs — usually missing secrets |
+| Database connection error | Verify `DATABASE_URL` on Railway |
+| Storefront blank | Check `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` |
 
 ---
 
-## 📚 References
+## 📚 Resources
 
-- Medusa 2.0 docs: https://docs.medusajs.com/v2
-- Railway docs: https://docs.railway.app
-- Medusa Next.js starter: https://github.com/medusajs/nextjs-starter-medusa
+- [Medusa V1 Docs](https://docs.medusajs.com)
+- [Railway Docs](https://docs.railway.app)
+- [Next.js Docs](https://nextjs.org/docs)
+- [Medusa Discord](https://discord.gg/medusajs)
 
 ---
 
 ## 📝 License
 
 MIT — see individual `LICENSE` files in each sub-project.
-# BACKEND-V1-MEDUSA
-# BACKEND-V1-MEDUSA
